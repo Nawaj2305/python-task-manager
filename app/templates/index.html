@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Python Task Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 720px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f4f7fb;
+        }
+        h1 { color: #243b53; }
+        form { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 12px; }
+        button { padding: 10px 16px; cursor: pointer; }
+        li { margin: 12px 0; }
+        .done { text-decoration: line-through; color: gray; }
+    </style>
+</head>
+<body>
+    <h1>Python Task Manager</h1>
+    <p>Manage tasks using Flask and Python.</p>
+
+    <form id="task-form">
+        <input id="title" placeholder="Enter a task" required>
+        <button type="submit">Add Task</button>
+    </form>
+
+    <ul id="task-list"></ul>
+
+    <script>
+        async function loadTasks() {
+            const response = await fetch("/api/tasks");
+            const tasks = await response.json();
+            const list = document.getElementById("task-list");
+            list.replaceChildren();
+
+            tasks.forEach(task => {
+                const item = document.createElement("li");
+                const label = document.createElement("span");
+                const checkbox = document.createElement("input");
+
+                checkbox.type = "checkbox";
+                checkbox.checked = task.completed;
+                checkbox.setAttribute("aria-label", "Mark task complete");
+
+                label.textContent = task.title;
+                if (task.completed) label.className = "done";
+
+                checkbox.addEventListener("change", async () => {
+                    await fetch(`/api/tasks/${task.id}`, {
+                        method: "PATCH",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({completed: checkbox.checked})
+                    });
+                    loadTasks();
+                });
+
+                item.append(checkbox, label);
+                list.appendChild(item);
+            });
+        }
+
+        document.getElementById("task-form").addEventListener("submit",
+            async event => {
+                event.preventDefault();
+                const input = document.getElementById("title");
+
+                const response = await fetch("/api/tasks", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({title: input.value})
+                });
+
+                if (response.ok) {
+                    input.value = "";
+                    loadTasks();
+                } else {
+                    alert("Unable to create task.");
+                }
+            }
+        );
+
+        loadTasks();
+    </script>
+</body>
+</html>
