@@ -30,10 +30,10 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint code
-        run: ruff check app tests run.py
+        run: python -m ruff check app tests run.py
 
       - name: Run tests
-        run: pytest -q
+        run:  python -m pytest -v
 
   build-and-publish:
     name: Build and Publish Docker Image
